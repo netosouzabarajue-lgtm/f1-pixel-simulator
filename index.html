@@ -37,8 +37,8 @@
             cX = mX - 60;
             cY = mY - 30;
 
-            container.style.transform = `translate(${cX}px, ${cY}px) rotate(${angulo}deg)`;
-
+            container.style.transform = translate(${carroX}px, ${carroY}px) rotate(${angulo + 180}deg
+            
             // Velocidade baseada no movimento rápido
             let vel = Math.min(Math.floor(Math.sqrt(dx*dx + dy*dy) * 5), 340);
             velDisplay.innerText = vel.toString().padStart(3, '0');
@@ -56,3 +56,4 @@
     </script>
 </body>
 </html>
+
