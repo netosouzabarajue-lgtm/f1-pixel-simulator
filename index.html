@@ -1,66 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>F1 Spark Simulator - Interlagos</title>
+    <title>F1 Simulator - Ajuste de Telemetria</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; cursor: none; }
+        body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; cursor: none; background-color: #000; }
         
-        /* Imagem da Pista (fundo) */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Circuit_Interlagos.svg/1024px-Circuit_Interlagos.svg.png') no-repeat center;
-            background-size: cover;
-            opacity: 0.3; /* Deixa a pista mais apagada pra ver as faíscas */
-            filter: grayscale(100%); /* Pista preta e branca pra contrastar */
-            z-index: -2;
-        }
-
         #carro-container {
             position: absolute;
-            transition: transform 0.1s ease-out; /* Suavização do movimento */
             pointer-events: none;
             z-index: 100;
+            will-change: transform;
         }
 
-        /* Usamos uma imagem ao invés de emoji */
         #carro-imagem {
-            width: 100px; /* Tamanho do carro na pista */
+            width: 120px; 
             height: auto;
-            transform-origin: center; /* Gira pelo centro */
+            /* Se a imagem estiver com fundo branco, a linha abaixo ajuda a disfarçar no fundo preto */
+            mix-blend-mode: screen; 
         }
 
         .faisca {
             position: absolute;
-            width: 4px; height: 4px;
-            background: #ff4500;
-            box-shadow: 0 0 10px #ff0000, 0 0 20px #ff8c00;
+            width: 3px; height: 3px;
+            background: #ffcc00;
+            box-shadow: 0 0 8px #ff4500;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 50;
         }
 
-        /* Velocímetro */
-        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; text-align: right; pointer-events: none; z-index: 200; }
-        #velocidade { font-size: 40px; font-weight: bold; font-style: italic; }
+        /* Velocímetro - Estilo Red Bull/Racing */
+        #hud { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px; 
+            color: #fff; 
+            text-align: right; 
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            border-right: 5px solid #ffcc00;
+        }
+        #velocidade { font-size: 50px; font-weight: bold; font-style: italic; color: #fff; }
+        .unidade { font-size: 15px; color: #ffcc00; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div id="carro-container">
-        <img id="carro-imagem" src="carro.png" alt="carro de f1" style="display: block;">
+        <img id="carro-imagem" src="carro.png" alt="F1 Car">
     </div>
 
     <div id="hud">
         <div id="velocidade">000</div>
-        <div style="font-size: 15px;">KM/H</div>
+        <div class="unidade">KM/H</div>
     </div>
 
     <script>
         const container = document.getElementById('carro-container');
-        const imagem = document.getElementById('carro-imagem');
         const velDisplay = document.getElementById('velocidade');
         let mouseX = 0, mouseY = 0, carroX = 0, carroY = 0;
 
@@ -70,27 +67,22 @@
         });
 
         function engine() {
-            // Suavização do movimento
-            let dx = mouseX - carroX - 50; // Ajusta o centro (metade da largura do carro)
-            let dy = mouseY - carroY - 25; // Ajusta o centro
+            // Aumentamos o fator para 0.40 para o carro "grudar" no mouse e parar o drift
+            let dx = mouseX - carroX - 60;
+            let dy = mouseY - carroY - 30;
             
-            carroX += dx * 0.15;
-            carroY += dy * 0.15;
+            carroX += dx * 0.40; 
+            carroY += dy * 0.40;
 
-            // Ângulo de rotação (ajustado para apontar para o mouse)
             let angulo = Math.atan2(dy, dx) * 180 / Math.PI;
-            
-            // O carro.png já está de pé, então precisamos adicionar 90 graus
-            // para que ele gire para a direção certa do mouse.
-            container.style.transform = `translate(${carroX}px, ${carroY}px) rotate(${angulo + 90}deg)`;
+            container.style.transform = `translate(${carroX}px, ${carroY}px) rotate(${angulo}deg)`;
 
-            // Velocidade
+            // Cálculo do KM/H baseado no movimento
             let dist = Math.sqrt(dx*dx + dy*dy);
-            let kmh = Math.min(Math.floor(dist * 5), 340);
+            let kmh = Math.min(Math.floor(dist * 8), 340);
             velDisplay.innerText = kmh.toString().padStart(3, '0');
 
-            // Gerar faíscas
-            if (dist > 15) { criarFaisca(carroX + 50, carroY + 50); }
+            if (dist > 5) { criarFaisca(carroX + 60, carroY + 30); }
             requestAnimationFrame(engine);
         }
 
@@ -100,13 +92,15 @@
             f.style.left = x + 'px';
             f.style.top = y + 'px';
             document.body.appendChild(f);
-            const velX = (Math.random() - 0.5) * 10;
-            const velY = Math.random() * 15;
+            
+            const vX = (Math.random() - 0.5) * 10;
+            const vY = (Math.random() - 0.5) * 10;
+
             f.animate([
-                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-                { transform: `translate(${velX * 10}px, ${velY * 10}px) scale(0)`, opacity: 0 }
-            ], { duration: 400, easing: 'ease-out' });
-            setTimeout(() => f.remove(), 400);
+                { transform: 'translate(0,0) scale(1)', opacity: 1 },
+                { transform: `translate(${vX*10}px, ${vY*10}px) scale(0)`, opacity: 0 }
+            ], { duration: 300 });
+            setTimeout(() => f.remove(), 300);
         }
         engine();
     </script>
