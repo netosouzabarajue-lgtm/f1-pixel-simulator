@@ -1,59 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>F1 Pro - Zero Drift</title>
+    <title>F1 Pro - Ajuste Final</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; cursor: none; font-family: 'Arial', sans-serif; }
-        #carro-container { position: absolute; pointer-events: none; z-index: 100; }
-        #carro-imagem { width: 120px; height: auto; transform: rotate(90deg); mix-blend-mode: screen; }
-        .faisca { position: absolute; width: 3px; height: 3px; background: #ffcc00; box-shadow: 0 0 8px #ff4500; border-radius: 50%; pointer-events: none; }
-        /* Painel de Telemetria */
-        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.8); padding: 10px 20px; border-radius: 5px; border-left: 4px solid #f00; z-index: 1000; }
-        #velocidade { font-size: 40px; font-weight: bold; font-style: italic; }
+        #car { position: absolute; pointer-events: none; z-index: 100; }
+        /* O segredo está no rotate(270deg) para alinhar a imagem vertical com o mouse */
+        #car img { width: 110px; height: auto; transform: rotate(270deg); mix-blend-mode: screen; }
+        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; border-left: 5px solid #e10600; z-index: 1000; }
+        .faisca { position: absolute; width: 3px; height: 3px; background: #ffcc00; border-radius: 50%; pointer-events: none; }
     </style>
 </head>
 <body>
-    <div id="carro-container"><img id="carro-imagem" src="carro.png"></div>
-    <div id="hud">
-        <div id="velocidade">000</div>
-        <div style="font-size: 12px; color: #aaa;">KM/H</div>
-    </div>
+    <div id="car"><img src="carro.png"></div>
+    <div id="hud"><div id="kmh" style="font-size: 35px; font-weight: bold; font-style: italic;">000</div><div style="font-size: 12px; color: #ffcc00;">KM/H</div></div>
 
     <script>
-        const container = document.getElementById('carro-container');
-        const velDisplay = document.getElementById('velocidade');
+        const car = document.getElementById('car');
+        const kmhDisp = document.getElementById('kmh');
         let cX = 0, cY = 0;
 
         document.addEventListener('mousemove', (e) => {
             let mX = e.clientX;
             let mY = e.clientY;
             
-            // Cálculo de ângulo
-            let dx = mX - cX - 60;
-            let dy = mY - cY - 30;
-            let angulo = Math.atan2(dy, dx) * 180 / Math.PI;
+            // Cálculo de direção sem delay
+            let dx = mX - cX - 55;
+            let dy = mY - cY - 25;
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-            // RESPOSTA DIRETA: O carro vai exatamente para onde o mouse está
-            cX = mX - 60;
-            cY = mY - 30;
+            // RESPOSTA DIRETA: O carro gruda no mouse (Fim do Drift)
+            cX = mX - 55;
+            cY = mY - 25;
 
-            container.style.transform = translate(${carroX}px, ${carroY}px) rotate(${angulo + 180}deg
-            
-            // Velocidade baseada no movimento rápido
-            let vel = Math.min(Math.floor(Math.sqrt(dx*dx + dy*dy) * 5), 340);
-            velDisplay.innerText = vel.toString().padStart(3, '0');
+            car.style.transform = `translate(${cX}px, ${cY}px) rotate(${angle}deg)`;
 
-            if (vel > 50) { criarFaisca(cX + 60, cY + 30); }
+            let speed = Math.min(Math.floor(Math.sqrt(dx*dx + dy*dy) * 6), 340);
+            kmhDisp.innerText = speed.toString().padStart(3, '0');
+
+            if (speed > 40) { 
+                const f = document.createElement('div');
+                f.className = 'faisca';
+                f.style.left = (cX + 55) + 'px'; f.style.top = (cY + 25) + 'px';
+                document.body.appendChild(f);
+                setTimeout(() => f.remove(), 200);
+            }
         });
-
-        function criarFaisca(x, y) {
-            const f = document.createElement('div');
-            f.className = 'faisca';
-            f.style.left = x + 'px'; f.style.top = y + 'px';
-            document.body.appendChild(f);
-            setTimeout(() => f.remove(), 300);
-        }
     </script>
 </body>
 </html>
-
