@@ -1,19 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>F1 Pro - Ajuste Final</title>
+    <meta charset="UTF-8">
+    <title>F1 Pixel Simulator - Final Setup</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; cursor: none; font-family: 'Arial', sans-serif; }
-        #car { position: absolute; pointer-events: none; z-index: 100; }
-        /* O segredo está no rotate(270deg) para alinhar a imagem vertical com o mouse */
-        #car img { width: 110px; height: auto; transform: rotate(270deg); mix-blend-mode: screen; }
-        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; border-left: 5px solid #e10600; z-index: 1000; }
-        .faisca { position: absolute; width: 3px; height: 3px; background: #ffcc00; border-radius: 50%; pointer-events: none; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #000; 
+            cursor: none; 
+            font-family: 'Arial', sans-serif; 
+        }
+
+        #car { 
+            position: absolute; 
+            pointer-events: none; 
+            z-index: 100;
+            /* Removemos a transição para eliminar o drift */
+        }
+
+        #car img { 
+            width: 110px; 
+            height: auto; 
+            /* Ajuste de 270 graus para o bico do seu carro ficar pra frente */
+            transform: rotate(270deg); 
+            mix-blend-mode: screen; 
+        }
+
+        /* Painel de Telemetria (Velocímetro) */
+        #hud { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px; 
+            color: #fff; 
+            background: rgba(0, 0, 0, 0.8); 
+            padding: 15px; 
+            border-radius: 8px; 
+            border-left: 6px solid #e10600; 
+            z-index: 1000; 
+            text-align: right;
+        }
+
+        #kmh { 
+            font-size: 45px; 
+            font-weight: bold; 
+            font-style: italic; 
+            line-height: 1;
+        }
+
+        .unidade { 
+            font-size: 14px; 
+            color: #ffcc00; 
+            font-weight: bold; 
+        }
+
+        .faisca { 
+            position: absolute; 
+            width: 3px; 
+            height: 3px; 
+            background: #ffcc00; 
+            border-radius: 50%; 
+            pointer-events: none; 
+            box-shadow: 0 0 5px #ff4500;
+        }
     </style>
 </head>
 <body>
-    <div id="car"><img src="carro.png"></div>
-    <div id="hud"><div id="kmh" style="font-size: 35px; font-weight: bold; font-style: italic;">000</div><div style="font-size: 12px; color: #ffcc00;">KM/H</div></div>
+
+    <div id="car">
+        <img src="carro.png" alt="F1 Car">
+    </div>
+
+    <div id="hud">
+        <div id="kmh">000</div>
+        <div class="unidade">KM/H</div>
+    </div>
 
     <script>
         const car = document.getElementById('car');
@@ -24,28 +85,16 @@
             let mX = e.clientX;
             let mY = e.clientY;
             
-            // Cálculo de direção sem delay
+            // Cálculo de direção baseado na diferença de posição
             let dx = mX - cX - 55;
             let dy = mY - cY - 25;
             let angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-            // RESPOSTA DIRETA: O carro gruda no mouse (Fim do Drift)
+            // Movimento instantâneo (Zero Drift)
             cX = mX - 55;
             cY = mY - 25;
 
             car.style.transform = `translate(${cX}px, ${cY}px) rotate(${angle}deg)`;
 
-            let speed = Math.min(Math.floor(Math.sqrt(dx*dx + dy*dy) * 6), 340);
-            kmhDisp.innerText = speed.toString().padStart(3, '0');
-
-            if (speed > 40) { 
-                const f = document.createElement('div');
-                f.className = 'faisca';
-                f.style.left = (cX + 55) + 'px'; f.style.top = (cY + 25) + 'px';
-                document.body.appendChild(f);
-                setTimeout(() => f.remove(), 200);
-            }
-        });
-    </script>
-</body>
-</html>
+            // Cálculo da velocidade (telemetria)
+            let speed = Math.min(Math.floor(Math.sqrt(
