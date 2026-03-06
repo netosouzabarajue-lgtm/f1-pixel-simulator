@@ -45,7 +45,7 @@
             // Diferença para calcular o ângulo
             const dx = mX - oldX;
             const dy = mY - oldY;
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+          const angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
 
             // Move o carro EXATAMENTE para onde o mouse está (sem drift)
             // Centralizamos o carro no cursor (metade da largura/altura)
@@ -76,3 +76,4 @@
     </script>
 </body>
 </html>
+
