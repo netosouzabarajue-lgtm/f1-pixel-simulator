@@ -2,78 +2,116 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>F1 Pro - Zero Drift</title>
+    <title>F1 Simulator - Pro Game</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; cursor: none; font-family: sans-serif; }
+        body { margin: 0; overflow: hidden; background: #000; cursor: none; font-family: 'Arial', sans-serif; }
         #car { position: absolute; pointer-events: none; z-index: 100; top: 0; left: 0; }
-        #car img { 
-            width: 110px; 
-            height: auto; 
-            /* Ajuste para o bico ficar pra frente */
-            transform: rotate(270deg); 
-            mix-blend-mode: screen; 
+        #car img { width: 100px; height: auto; transform: rotate(90deg); mix-blend-mode: screen; }
+        
+        /* Ponto de Corrida */
+        #ponto { 
+            position: absolute; width: 40px; height: 40px; background: radial-gradient(circle, #ffcc00, #ff4500); 
+            border-radius: 50%; box-shadow: 0 0 20px #ffcc00; display: none; z-index: 50;
         }
-        #hud { 
-            position: fixed; bottom: 30px; right: 30px; color: #fff; 
-            background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; 
-            border-left: 6px solid #e10600; z-index: 1000; 
+
+        /* HUD e Menu */
+        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; border-left: 5px solid #e10600; }
+        #menu { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: rgba(20, 20, 20, 0.9); padding: 30px; border-radius: 15px; text-align: center; color: white; z-index: 2000; border: 2px solid #e10600;
         }
-        #kmh { font-size: 45px; font-weight: bold; font-style: italic; }
-        .faisca { 
-            position: absolute; width: 3px; height: 3px; background: #ffcc00; 
-            border-radius: 50%; pointer-events: none; 
-        }
+        button { background: #e10600; color: white; border: none; padding: 15px 30px; margin: 10px; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        button:hover { background: #ff1e14; }
     </style>
 </head>
 <body>
+
+    <div id="menu">
+        <h2>CONFIGURAÇÃO DO BÓLIDO</h2>
+        <button onclick="iniciarJogo('pontos')">MODO CORRIDA DE PONTOS</button>
+        <button onclick="iniciarJogo('som')">MODO SOM DO MOTOR</button>
+    </div>
+
+    <div id="ponto"></div>
     <div id="car"><img src="carro.png"></div>
+    
     <div id="hud">
-        <div id="kmh">000</div>
-        <div style="color: #ffcc00; font-weight: bold;">KM/H</div>
+        <div id="status">MODO: ESPERA</div>
+        <div id="kmh" style="font-size: 30px; font-weight: bold;">000</div>
+        <div id="score" style="color: #ffcc00; display:none;">PONTOS: 0</div>
     </div>
 
     <script>
         const car = document.getElementById('car');
         const kmhDisp = document.getElementById('kmh');
-        let oldX = 0, oldY = 0;
+        const ponto = document.getElementById('ponto');
+        const scoreDisp = document.getElementById('score');
+        
+        let oldX = 0, oldY = 0, pontos = 0, modoAtivo = "";
+        let audioCtx, oscillator;
+
+        function iniciarJogo(modo) {
+            modoAtivo = modo;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('status').innerText = "MODO: " + modo.toUpperCase();
+            
+            if (modo === 'pontos') {
+                ponto.style.display = 'block';
+                scoreDisp.style.display = 'block';
+                moverPonto();
+            }
+            if (modo === 'som') { iniciarAudio(); }
+        }
+
+        function moverPonto() {
+            ponto.style.left = Math.random() * (window.innerWidth - 50) + 'px';
+            ponto.style.top = Math.random() * (window.innerHeight - 50) + 'px';
+        }
+
+        function iniciarAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sawtooth'; 
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            gainNode.gain.value = 0.05; 
+            oscillator.start();
+        }
 
         document.addEventListener('mousemove', (e) => {
-            // Posição do Mouse
-            const mX = e.clientX;
-            const mY = e.clientY;
+            if (modoAtivo === "") return;
 
-            // Diferença para calcular o ângulo
-            const dx = mX - oldX;
-            const dy = mY - oldY;
-          const angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
-
-            // Move o carro EXATAMENTE para onde o mouse está (sem drift)
-            // Centralizamos o carro no cursor (metade da largura/altura)
-            car.style.left = (mX - 55) + 'px';
-            car.style.top = (mY - 55) + 'px';
+            const mX = e.clientX; const mY = e.clientY;
+            const dx = mX - oldX; const dy = mY - oldY;
             
-            // Só gira se o mouse estiver se mexendo
-            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-                car.style.transform = `rotate(${angle}deg)`;
-            }
+            // Ângulo corrigido para alinhar o bico do carro (usando +90)
+            const angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
 
-            // Velocidade
+            car.style.left = (mX - 50) + 'px';
+            car.style.top = (mY - 50) + 'px';
+            if (Math.abs(dx) > 1) car.style.transform = `rotate(${angle}deg)`;
+
             const speed = Math.min(Math.floor(Math.sqrt(dx*dx + dy*dy) * 5), 340);
             kmhDisp.innerText = speed.toString().padStart(3, '0');
 
-            // Faíscas
-            if (speed > 40) {
-                const f = document.createElement('div');
-                f.className = 'faisca';
-                f.style.left = mX + 'px'; f.style.top = mY + 'px';
-                document.body.appendChild(f);
-                setTimeout(() => f.remove(), 200);
+            // Lógica de Som (Frequência sobe com a velocidade)
+            if (oscillator) {
+                oscillator.frequency.setTargetAtTime(100 + (speed * 2), audioCtx.currentTime, 0.1);
             }
 
-            oldX = mX;
-            oldY = mY;
+            // Lógica de Pontos (Colisão)
+            if (modoAtivo === 'pontos') {
+                const pRect = ponto.getBoundingClientRect();
+                if (mX > pRect.left && mX < pRect.right && mY > pRect.top && mY < pRect.bottom) {
+                    pontos++;
+                    scoreDisp.innerText = "PONTOS: " + pontos;
+                    moverPonto();
+                }
+            }
+
+            oldX = mX; oldY = mY;
         });
     </script>
 </body>
 </html>
-
