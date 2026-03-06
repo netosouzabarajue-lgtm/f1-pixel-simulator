@@ -2,72 +2,76 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>F1 Ultimate Simulator</title>
+    <title>F1 Ultimate - Fix</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; cursor: none; font-family: 'Arial', sans-serif; }
-        #car { position: absolute; pointer-events: none; z-index: 100; top: 0; left: 0; }
-        #car img { width: 90px; height: auto; mix-blend-mode: screen; }
+        body { margin: 0; overflow: hidden; background: #000; cursor: default; font-family: 'Arial', sans-serif; }
+        #car { position: absolute; pointer-events: none; z-index: 100; display: none; }
+        #car img { width: 90px; height: auto; transform: rotate(90deg); mix-blend-mode: screen; }
         
-        /* Ponto e Box */
-        #ponto { position: absolute; width: 30px; height: 30px; background: radial-gradient(circle, #ffcc00, #ff4500); border-radius: 50%; box-shadow: 0 0 15px #ffcc00; display: none; }
-        #pitstop { position: fixed; top: 20px; left: 20px; width: 120px; height: 180px; border: 3px dashed #fff; color: #fff; display: flex; align-items: center; text-align: center; font-size: 12px; background: rgba(255,255,255,0.1); }
-
-        /* HUD */
-        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border-left: 6px solid #e10600; min-width: 150px; }
-        .bar { width: 100%; height: 8px; background: #333; margin: 5px 0; border-radius: 4px; overflow: hidden; }
-        #pneu-inner { width: 100%; height: 100%; background: #00ff00; transition: width 0.3s; }
-        
-        #menu { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; padding: 40px; border-radius: 15px; text-align: center; color: white; z-index: 2000; border: 2px solid #e10600; }
-        button { background: #e10600; color: white; border: none; padding: 12px 25px; margin: 8px; cursor: pointer; font-weight: bold; border-radius: 5px; width: 200px; }
-        .chuva-efeito { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(0, 50, 100, 0.1); display: none; }
+        #menu { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: #111; padding: 40px; border-radius: 15px; text-align: center; 
+            color: white; z-index: 2000; border: 2px solid #e10600; 
+        }
+        button { 
+            background: #e10600; color: white; border: none; padding: 15px; 
+            margin: 10px; cursor: pointer; font-weight: bold; width: 220px; font-size: 16px;
+        }
+        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="chuva" class="chuva-efeito"></div>
-
     <div id="menu">
-        <h1>F1 SIMULATOR 2026</h1>
-        <button onclick="iniciar('seco')">PISTA SECA</button><br>
-        <button onclick="iniciar('chuva')">PISTA MOLHADA (DRIFT)</button>
+        <h1>F1 SIMULATOR</h1>
+        <button id="btnSeco">PISTA SECA</button><br>
+        <button id="btnChuva">PISTA MOLHADA (DRIFT)</button>
     </div>
 
-    <div id="pitstop">ENTRE AQUI PARA<br>PIT STOP</div>
-    <div id="ponto"></div>
-    <div id="car"><img src="carro.png" id="carImg"></div>
+    <div id="car"><img src="carro.png"></div>
     
     <div id="hud">
-        <div id="kmh" style="font-size: 35px; font-weight: bold;">000 KM/H</div>
-        <div style="font-size: 12px; margin-top: 5px;">CONDIÇÃO DO PNEU:</div>
-        <div class="bar"><div id="pneu-inner"></div></div>
-        <div id="score" style="color: #ffcc00; font-weight: bold;">PONTOS: 0</div>
-        <div id="recorde" style="font-size: 11px; color: #aaa;">RECORDE: 0</div>
+        <div id="kmh" style="font-size: 30px; font-weight: bold;">000 KM/H</div>
+        <div id="score">PONTOS: 0</div>
     </div>
 
     <script>
+        const menu = document.getElementById('menu');
         const car = document.getElementById('car');
-        const pneuInner = document.getElementById('pneu-inner');
-        const scoreDisp = document.getElementById('score');
-        const recDisp = document.getElementById('recorde');
-        
-        let cX = 0, cY = 0, mouseX = 0, mouseY = 0;
-        let pneu = 100, pontos = 0, recorde = localStorage.getItem('f1-recorde') || 0;
-        let modo = "", emPit = false;
+        const hud = document.getElementById('hud');
+        let modo = "";
 
-        recDisp.innerText = "RECORDE: " + recorde;
+        // Escutadores de clique diretos (mais seguros que o onclick)
+        document.getElementById('btnSeco').addEventListener('click', () => iniciar('seco'));
+        document.getElementById('btnChuva').addEventListener('click', () => iniciar('chuva'));
 
         function iniciar(m) {
             modo = m;
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('ponto').style.display = 'block';
-            if(m === 'chuva') document.getElementById('chuva').style.display = 'block';
-            moverPonto();
-            loop();
+            menu.style.display = 'none';
+            car.style.display = 'block';
+            hud.style.display = 'block';
+            document.body.style.cursor = 'none';
+            loop(); // Liga o motor
         }
 
-        function moverPonto() {
-            document.getElementById('ponto').style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
-            document.getElementById('ponto').style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
-        }
+        let mouseX = 0, mouseY = 0, cX = 0, cY = 0;
+        document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
 
-        document.addEventListener('mousemove
+        function loop() {
+            let dx = mouseX - cX - 45;
+            let dy = mouseY - cY - 45;
+            let suavidade = (modo === 'chuva') ? 0.05 : 0.2;
+
+            cX += dx * suavidade;
+            cY += dy * suavidade;
+
+            let angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
+            car.style.left = cX + 'px';
+            car.style.top = cY + 'px';
+            car.style.transform = `rotate(${angle}deg)`;
+
+            requestAnimationFrame(loop);
+        }
+    </script>
+</body>
+</html>
