@@ -2,99 +2,77 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>F1 Pixel Simulator - Final Setup</title>
+    <title>F1 Pro - Zero Drift</title>
     <style>
-        body { 
-            margin: 0; 
-            overflow: hidden; 
-            background: #000; 
-            cursor: none; 
-            font-family: 'Arial', sans-serif; 
-        }
-
-        #car { 
-            position: absolute; 
-            pointer-events: none; 
-            z-index: 100;
-            /* Removemos a transição para eliminar o drift */
-        }
-
+        body { margin: 0; overflow: hidden; background: #000; cursor: none; font-family: sans-serif; }
+        #car { position: absolute; pointer-events: none; z-index: 100; top: 0; left: 0; }
         #car img { 
             width: 110px; 
             height: auto; 
-            /* Ajuste de 270 graus para o bico do seu carro ficar pra frente */
+            /* Ajuste para o bico ficar pra frente */
             transform: rotate(270deg); 
             mix-blend-mode: screen; 
         }
-
-        /* Painel de Telemetria (Velocímetro) */
         #hud { 
-            position: fixed; 
-            bottom: 30px; 
-            right: 30px; 
-            color: #fff; 
-            background: rgba(0, 0, 0, 0.8); 
-            padding: 15px; 
-            border-radius: 8px; 
-            border-left: 6px solid #e10600; 
-            z-index: 1000; 
-            text-align: right;
+            position: fixed; bottom: 30px; right: 30px; color: #fff; 
+            background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; 
+            border-left: 6px solid #e10600; z-index: 1000; 
         }
-
-        #kmh { 
-            font-size: 45px; 
-            font-weight: bold; 
-            font-style: italic; 
-            line-height: 1;
-        }
-
-        .unidade { 
-            font-size: 14px; 
-            color: #ffcc00; 
-            font-weight: bold; 
-        }
-
+        #kmh { font-size: 45px; font-weight: bold; font-style: italic; }
         .faisca { 
-            position: absolute; 
-            width: 3px; 
-            height: 3px; 
-            background: #ffcc00; 
-            border-radius: 50%; 
-            pointer-events: none; 
-            box-shadow: 0 0 5px #ff4500;
+            position: absolute; width: 3px; height: 3px; background: #ffcc00; 
+            border-radius: 50%; pointer-events: none; 
         }
     </style>
 </head>
 <body>
-
-    <div id="car">
-        <img src="carro.png" alt="F1 Car">
-    </div>
-
+    <div id="car"><img src="carro.png"></div>
     <div id="hud">
         <div id="kmh">000</div>
-        <div class="unidade">KM/H</div>
+        <div style="color: #ffcc00; font-weight: bold;">KM/H</div>
     </div>
 
     <script>
         const car = document.getElementById('car');
         const kmhDisp = document.getElementById('kmh');
-        let cX = 0, cY = 0;
+        let oldX = 0, oldY = 0;
 
         document.addEventListener('mousemove', (e) => {
-            let mX = e.clientX;
-            let mY = e.clientY;
+            // Posição do Mouse
+            const mX = e.clientX;
+            const mY = e.clientY;
+
+            // Diferença para calcular o ângulo
+            const dx = mX - oldX;
+            const dy = mY - oldY;
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+            // Move o carro EXATAMENTE para onde o mouse está (sem drift)
+            // Centralizamos o carro no cursor (metade da largura/altura)
+            car.style.left = (mX - 55) + 'px';
+            car.style.top = (mY - 55) + 'px';
             
-            // Cálculo de direção baseado na diferença de posição
-            let dx = mX - cX - 55;
-            let dy = mY - cY - 25;
-            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            // Só gira se o mouse estiver se mexendo
+            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                car.style.transform = `rotate(${angle}deg)`;
+            }
 
-            // Movimento instantâneo (Zero Drift)
-            cX = mX - 55;
-            cY = mY - 25;
+            // Velocidade
+            const speed = Math.min(Math.floor(Math.sqrt(dx*dx + dy*dy) * 5), 340);
+            kmhDisp.innerText = speed.toString().padStart(3, '0');
 
-            car.style.transform = `translate(${cX}px, ${cY}px) rotate(${angle}deg)`;
+            // Faíscas
+            if (speed > 40) {
+                const f = document.createElement('div');
+                f.className = 'faisca';
+                f.style.left = mX + 'px'; f.style.top = mY + 'px';
+                document.body.appendChild(f);
+                setTimeout(() => f.remove(), 200);
+            }
 
-            // Cálculo da velocidade (telemetria)
-            let speed = Math.min(Math.floor(Math.sqrt(
+            oldX = mX;
+            oldY = mY;
+        });
+    </script>
+</body>
+</html>
