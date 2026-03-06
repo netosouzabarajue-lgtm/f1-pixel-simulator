@@ -76,8 +76,8 @@
             let dx = mouseX - cX - 45;
             let dy = mouseY - cY - 45;
             
-            // Lógica de Drift (Chuva vs Seco)
-            let suavidade = (modo === 'chuva') ? 0.05 : 0.2; 
+          // No seco (1.0), o carro cola no mouse. Na chuva (0.05), ele desliza.
+let suavidade = (modo === 'chuva') ? 0.05 : 1.0;
             if (pneu <= 0) suavidade = 0.02; // Carro fica horrível sem pneu
 
             cX += dx * suavidade;
@@ -124,4 +124,5 @@
     </script>
 </body>
 </html>
+
 
