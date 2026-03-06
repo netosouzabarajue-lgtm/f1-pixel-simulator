@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>F1 Pixel Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
+            cursor: none; /* Esconde o mouse pra só ver o carro */
+        }
+        #carro {
+            position: absolute;
+            font-size: 50px;
+            transition: transform 0.1s ease-out;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .faisca {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ff4500;
+            box-shadow: 0 0 10px #ff0000, 0 0 20px #ff8c00;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="carro">🏎️</div>
+
+    <script>
+        const carro = document.getElementById('carro');
+        let mouseX = 0;
+        let mouseY = 0;
+        let carroX = 0;
+        let carroY = 0;
+
+        // Captura a telemetria do mouse
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function engine() {
+            // Física de perseguição (atraso suave igual suspensão de F1)
+            let dx = mouseX - carroX - 25;
+            let dy = mouseY - carroY - 25;
+            
+            carroX += dx * 0.15;
+            carroY += dy * 0.15;
+
+            // Calcula o ângulo para o carro "apontar" pro mouse
+            let angulo = Math.atan2(dy, dx) * 180 / Math.PI;
+
+            carro.style.transform = `translate(${carroX}px, ${carroY}px) rotate(${angulo}deg)`;
+
+            // Gerar faíscas se o carro estiver se movendo rápido (atrito)
+            if (Math.abs(dx) + Math.abs(dy) > 10) {
+                criarFaisca(carroX + 25, carroY + 40);
+            }
+
+            requestAnimationFrame(engine);
+        }
+
+        function criarFaisca(x, y) {
+            const f = document.createElement('div');
+            f.className = 'faisca';
+            f.style.left = x + 'px';
+            f.style.top = y + 'px';
+            document.body.appendChild(f);
+
+            // Explosão da partícula
+            const velX = (Math.random() - 0.5) * 10;
+            const velY = Math.random() * 15;
+
+            f.animate([
+                { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                { transform: `translate(${velX * 10}px, ${velY * 10}px) scale(0)`, opacity: 0 }
+            ], {
+                duration: 400 + Math.random() * 400,
+                easing: 'ease-out'
+            });
+
+            setTimeout(() => f.remove(), 800);
+        }
+
+        engine();
+    </script>
+</body>
+</html>
