@@ -2,142 +2,99 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>F1 Grand Prix - Ultimate Edition</title>
+    <title>YT Music - F1 Theme</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; cursor: none; font-family: 'Arial', sans-serif; }
-        #car { position: absolute; pointer-events: none; z-index: 100; top: 0; left: 0; }
-        #car img { width: 90px; height: auto; mix-blend-mode: screen; }
-        
-        /* Ponto e Obstáculos */
-        #ponto { position: absolute; width: 30px; height: 30px; background: radial-gradient(circle, #ffcc00, #ff4500); border-radius: 50%; box-shadow: 0 0 15px #ffcc00; display: none; }
-        .rival { position: absolute; width: 80px; height: auto; mix-blend-mode: screen; opacity: 0.6; z-index: 40; }
-        .faisca { position: absolute; width: 3px; height: 3px; background: #ffcc00; border-radius: 50%; pointer-events: none; box-shadow: 0 0 8px #ff4500; }
+        /* 1. ESTILO DO AMBIENTE (O PADDOCK) */
+        body { 
+            margin: 0; 
+            background: #030303; 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+        }
 
-        /* Pit Stop e HUD */
-        #pitstop { position: fixed; top: 20px; left: 20px; width: 120px; height: 180px; border: 3px dashed #fff; color: #fff; display: flex; align-items: center; text-align: center; font-size: 12px; background: rgba(255,255,255,0.1); }
-        #hud { position: fixed; bottom: 20px; right: 20px; color: #fff; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; border-left: 6px solid #e10600; min-width: 160px; }
-        .bar { width: 100%; height: 8px; background: #333; margin: 5px 0; border-radius: 4px; overflow: hidden; }
-        #pneu-inner { width: 100%; height: 100%; background: #00ff00; transition: width 0.3s; }
-        #drs-indicador { display: inline-block; padding: 2px 8px; background: #333; color: #555; font-weight: bold; font-size: 12px; margin-top: 5px; border-radius: 3px; }
-        #drs-indicador.ativo { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
+        /* 2. A CAPA DO DISCO (O PNEU) */
+        .album-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+        }
 
-        /* Menu */
-        #menu { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; padding: 40px; border-radius: 15px; text-align: center; color: white; z-index: 2000; border: 2px solid #e10600; }
-        button { background: #e10600; color: white; border: none; padding: 12px 25px; margin: 8px; cursor: pointer; font-weight: bold; border-radius: 5px; width: 200px; }
-        .chuva-efeito { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(0, 50, 100, 0.15); display: none; z-index: 10; }
+        .album-art { 
+            width: 100%; 
+            height: 100%; 
+            border-radius: 50%; 
+            border: 8px solid #1a1a1a; 
+            background: url('carro.png') center/cover; 
+            box-shadow: 0 0 40px rgba(225, 6, 0, 0.3);
+            animation: rotate 12s linear infinite; 
+            animation-play-state: paused; 
+        }
+
+        /* Quando a classe 'playing' entra, o disco gira */
+        .playing .album-art { animation-play-state: running; }
+
+        @keyframes rotate { 
+            from { transform: rotate(0deg); } 
+            to { transform: rotate(360deg); } 
+        }
+
+        /* 3. INFORMAÇÕES DA MÚSICA */
+        .info { text-align: center; margin-top: 40px; }
+        .title { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+        .artist { color: #e10600; font-size: 18px; margin-top: 5px; font-weight: bold; }
+
+        /* 4. BARRA DE PROGRESSO (A PISTA) */
+        .track-container { width: 85%; max-width: 450px; margin-top: 50px; }
+        .track-bar { width: 100%; height: 6px; background: #333; border-radius: 3px; cursor: pointer; }
+        .track-fill { height: 100%; background: #e10600; width: 0%; border-radius: 3px; position: relative; }
+
+        /* 5. CONTROLES (O VOLANTE) */
+        .controls { margin-top: 40px; }
+        .play-btn { 
+            width: 80px; height: 80px; border-radius: 50%; 
+            background: white; border: none; cursor: pointer; 
+            font-size: 32px; transition: 0.2s; 
+        }
+        .play-btn:hover { transform: scale(1.1); background: #e10600; color: white; }
     </style>
 </head>
-<body>
+<body id="main">
 
-    <div id="chuva" class="chuva-efeito"></div>
-    <div id="menu">
-        <h1>F1 ULTIMATE SIM</h1>
-        <button onclick="iniciar('seco')">PISTA SECA</button><br>
-        <button onclick="iniciar('chuva')">PISTA MOLHADA (DRIFT)</button>
+    <div class="album-wrapper">
+        <div class="album-art"></div>
     </div>
 
-    <div id="pitstop">PIT STOP<br>(REPARAR PNEUS)</div>
-    <div id="ponto"></div>
-    <div id="car"><img src="carro.png"></div>
-    
-    <div id="hud">
-        <div id="kmh" style="font-size: 35px; font-weight: bold;">000 KM/H</div>
-        <div id="drs-indicador">DRS</div>
-        <div style="font-size: 11px; margin-top: 10px;">PNEUS:</div>
-        <div class="bar"><div id="pneu-inner"></div></div>
-        <div id="score" style="color: #ffcc00; font-weight: bold;">PONTOS: 0</div>
+    <div class="info">
+        <div class="title">F1 Official Theme</div>
+        <div class="artist">BRIAN TYLER</div>
     </div>
+
+    <div class="track-container">
+        <div class="track-bar" id="bar">
+            <div class="track-fill" id="fill"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="play-btn" id="btn">▶</button>
+    </div>
+
+    <audio id="musica" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
 
     <script>
-        const car = document.getElementById('car');
-        const pneuInner = document.getElementById('pneu-inner');
-        const scoreDisp = document.getElementById('score');
-        const drsInd = document.getElementById('drs-indicador');
-        
-        let cX = 0, cY = 0, mouseX = 0, mouseY = 0;
-        let pneu = 100, pontos = 0, modo = "", emPit = false, jogoAtivo = false;
+        const som = document.getElementById('musica');
+        const btn = document.getElementById('btn');
+        const fill = document.getElementById('fill');
+        const body = document.getElementById('main');
 
-        function iniciar(m) {
-            modo = m;
-            jogoAtivo = true;
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('ponto').style.display = 'block';
-            if(m === 'chuva') document.getElementById('chuva').style.display = 'block';
-            moverPonto();
-            criarRivais();
-            loop();
-        }
-
-        function moverPonto() {
-            document.getElementById('ponto').style.left = Math.random() * (window.innerWidth - 100) + 50 + 'px';
-            document.getElementById('ponto').style.top = Math.random() * (window.innerHeight - 100) + 50 + 'px';
-        }
-
-        function criarRivais() {
-            for(let i=0; i<3; i++) {
-                let r = document.createElement('img');
-                r.src = 'carro.png';
-                r.className = 'rival';
-                r.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
-                document.body.appendChild(r);
-                moverRival(r);
-            }
-        }
-
-        function moverRival(r) {
-            r.style.left = '-150px';
-            r.style.top = Math.random() * window.innerHeight + 'px';
-            let v = Math.random() * 5 + 2;
-            function anim() {
-                let x = parseFloat(r.style.left);
-                r.style.left = (x + v) + 'px';
-                if(x < window.innerWidth) requestAnimationFrame(anim);
-                else moverRival(r);
-            }
-            anim();
-        }
-
-        document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
-
-        function loop() {
-            if(!jogoAtivo) return;
-
-            let dx = mouseX - cX - 45;
-            let dy = mouseY - cY - 45;
-            
-            // Lógica de Direção (0.2 no seco para precisão, 0.05 na chuva para drift)
-            let suavidade = (modo === 'chuva') ? 0.05 : 0.2; 
-            if (pneu <= 10) suavidade = 0.02;
-
-            cX += dx * suavidade;
-            cY += dy * suavidade;
-
-            let angle = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
-            car.style.left = cX + 'px';
-            car.style.top = cY + 'px';
-            car.style.transform = `rotate(${angle}deg)`;
-
-            let speed = Math.floor(Math.sqrt(dx*dx + dy*dy) * 5);
-            
-            // DRS Ativado acima de 200 KM/H
-            if (speed > 200) {
-                drsInd.classList.add('ativo');
-                speed = Math.floor(speed * 1.2); // Bônus de velocidade
-            } else {
-                drsInd.classList.remove('ativo');
-            }
-            
-            document.getElementById('kmh').innerText = Math.min(speed, 360).toString().padStart(3, '0') + " KM/H";
-
-            // Faíscas em alta velocidade
-            if (speed > 150 && Math.random() > 0.8) {
-                let f = document.createElement('div');
-                f.className = 'faisca';
-                f.style.left = (cX + 45) + 'px'; f.style.top = (cY + 45) + 'px';
-                document.body.appendChild(f);
-                setTimeout(() => f.remove(), 400);
-            }
-
-            // Desgaste e Pit Stop
-            if (speed >
-                
+        // FUNÇÃO DE PLAY/PAUSE
+        btn.onclick = () => {
+            if (som.paused) {
+                som.play();
+                btn.innerText = "⏸";
+                body.
